@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 
 from loguru import logger
-from sqlalchemy import Engine, text
+from sqlalchemy import Engine, text, func
 
 from tickets_api.db import create_tables, get_db, Ticket
 from tickets_api.models import TicketBuyRequest, TicketDto
@@ -14,6 +14,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from tickets_api.db import make_engine, make_sessionmaker
+
+from src.tickets_api.models import TicketCount
 
 
 def create_app(database_url: str) -> FastAPI:
@@ -85,6 +87,21 @@ def create_app(database_url: str) -> FastAPI:
             seat_number=ticket.seat_number,
             expiration_date=ticket.expiration_date,
         )
+
+    @app.get("/tickets/count-tickets{train-code}", response_model=TicketCount)
+    def count_tickets(train_code: str, db: Session = Depends(get_db)) -> TicketDto:
+        ticket_count: int = (
+            db.query(func.count(Ticket.id))
+            .filter(Ticket.train_code == train_code)
+            .scalar()
+        )
+
+        if ticket_count is None:
+            error_description: str = f"Failed to count tickets for train {train_code}"
+            logger.error(error_description)
+            raise HTTPException(status_code=404, detail=error_description)
+
+        return TicketCount(train_code=train_code, ticket_count=ticket_count)
 
     @app.get("/health")
     def health():
