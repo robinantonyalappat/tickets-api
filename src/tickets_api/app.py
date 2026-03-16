@@ -92,7 +92,6 @@ def create_app(database_url: str) -> FastAPI:
     def count_tickets(train_code: str, db: Session = Depends(get_db)) -> TicketCountDto:
         statement: str = select(func.count(Ticket.id)).where(Ticket.train_code == train_code)
         ticket_count: int = db.scalar(statement) or 0
-        logger.info(f"Counted {ticket_count} tickets for train {train_code}")
 
         return TicketCountDto(train_code=train_code, count=ticket_count)
 
