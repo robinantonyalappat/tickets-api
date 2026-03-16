@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 
 from tickets_api.db import make_engine, make_sessionmaker
 
-from tickets_api.models import TicketCount
+from tickets_api.models import TicketCountDto
 
 
 def create_app(database_url: str) -> FastAPI:
@@ -88,13 +88,13 @@ def create_app(database_url: str) -> FastAPI:
             expiration_date=ticket.expiration_date,
         )
 
-    @app.get("/tickets/{train_code}/count-tickets", response_model=TicketCount)
-    def count_tickets(train_code: str, db: Session = Depends(get_db)) -> TicketDto:
+    @app.get("/tickets/{train_code}/count-tickets", response_model=TicketCountDto)
+    def count_tickets(train_code: str, db: Session = Depends(get_db)) -> TicketCountDto:
         statement: str = select(func.count(Ticket.id)).where(Ticket.train_code == train_code)
         ticket_count: int = db.scalar(statement) or 0
         logger.info(f"Counted {ticket_count} tickets for train {train_code}")
 
-        return TicketCount(train_code=train_code, count=ticket_count)
+        return TicketCountDto(train_code=train_code, count=ticket_count)
 
     @app.get("/health")
     def health():

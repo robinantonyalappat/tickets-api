@@ -18,6 +18,6 @@ class TicketDto(BaseModel):
     seat_number: int | None
     expiration_date: datetime
 
-class TicketCount(BaseModel):
+class TicketCountDto(BaseModel):
     train_code: str
     count: int
